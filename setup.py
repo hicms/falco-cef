@@ -5,11 +5,9 @@ import distutils.command
 import sys
 import os
 from distutils.sysconfig import get_python_lib
-# from esky.bdist_esky import Executable
-# from setuptools import setup, Command
-# from setuptools import setup
-from cx_Freeze import setup, Executable
-import py2exe
+from esky.bdist_esky import Executable
+from glob import glob
+from setuptools import setup
 """
 A custom setuptools command to invoke sphinx-apidoc script
 """
@@ -25,31 +23,6 @@ requirements = [
 
 if sys.platform in ["win32"]:
 
-    setup(
-        name = "Falco",
-        executables = [Executable("wxpython.py", base="Win32GUI")],
-        # optimize = 1,
-        # compressed = 0,
-        # bundle_files = 3,
-        # "zipfile": None, # The zipfile will by packaged into the exe instead.
-        # "packages": ["werkzeug", "email"],
-        # packages = ["wx"],
-        # "includes": ["sip"],
-        includes = ["json", "wx"],        
-        )
-    setup(
-        name = "Falco",
-        windows = ["wxpython.py"],
-        optimize = 1,
-        compressed = 0,
-        bundle_files = 3,
-        # "zipfile": None, # The zipfile will by packaged into the exe instead.
-        # "packages": ["werkzeug", "email"],
-        # packages = ["wx"],
-        # "includes": ["sip"],
-        includes = ["json", "wx"],
-    )
-    exit(0)
     setup(
         name = "falco-cef",
         version = "0.0.1",
@@ -70,12 +43,24 @@ if sys.platform in ["win32"]:
         ],
         # data_files = [(".", ("dll/gdiplus.dll",))],
         data_files = [
+
+            # Include our CEF dependencies and resources
             (".", [os.path.join(get_python_lib(), 'cefpython3', name) for name in (
                 "Microsoft.VC90.CRT.manifest",
                 "msvcm90.dll",
                 "msvcp90.dll",
-                "msvcr90.dll"
+                "msvcr90.dll",
+
+                "cef.pak",
+                "cefclient.exe",
+                "ffmpegsumo.dll",
+                "icudt.dll",
+                "libEGL.dll",
+                "libGLESv2.dll",
+                "subprocess.exe",
             )]),
+            ("locales", glob(os.path.join(get_python_lib(), 'cefpython3', 'locales', '*')))
+
         ],
         options = {
             "nosetests": {
@@ -87,6 +72,8 @@ if sys.platform in ["win32"]:
                 "config_dir": "doc",
             },
             "bdist_esky": {
+                # Force esky to freeze the app using py2exe
+                "freezer_module": "cxfreeze",
 
                 # Move the esky dist dir beneath build
                 "dist_dir": "build/bdist_esky",
@@ -94,18 +81,14 @@ if sys.platform in ["win32"]:
                 # Necessary for subsequent patching
                 "enable_appdata_dir": True,
 
-                # Force esky to freeze the app using py2exe
-                "freezer_module": "py2exe",
-
                 # py2exe options
                 "freezer_options": {
-                    "optimize": 0,
-                    "compressed": 1,
+                    # "optimize": 0,
+                    # "compressed": 1,
                     # "bundle_files": 3,
                     # "zipfile": None, # The zipfile will by packaged into the exe instead.
                     # "packages": ["werkzeug", "email"],
-                    "packages": ["wx"],
-                    # "includes": ["sip"],
+                    # "packages": ["wx"],
                     "includes": ["json", "wx"],
                     "excludes": [
                         # "IPython", "IPython.Shell", "IPython.frontend.terminal.embed",
@@ -115,42 +98,44 @@ if sys.platform in ["win32"]:
                         # "pydoc",
                         # "test.test_support",
                         # "twisted.test",
-                        # "unittest",
-                        # "wx", "wxPython", "wxversion"
+                        "unittest",
+                        # "wx",
+                        "wxPython",
+                        # "wxversion",
                     ],
-                    "dll_excludes": [
-                        # "OLEAUT32.dll", "USER32.dll", "MPR.dll", "SHELL32.dll", "KERNEL32.dll", "COMDLG32.dll",
-                        # "WSOCK32.dll", "COMCTL32.dll", "ADVAPI32.dll", "NETAPI32.dll", "WS2_32.dll", "MSVCP71.dll",
-                        # "VERSION.dll", "ole32.dll", "MSWSOCK.dll", "GDI32.dll"
-                    ],
-                    "ignores": [
-                        # "DLFCN",
-                        # "PySide.QtCore",
-                        # "__pypy__",
-                        # "blinker",
-                        # "dl",
-                        # "cmemcache", "cmemcached",
-                        # "django.utils",
-                        # "email.Charset", "email.Encoders", "email.Errors", "email.Generator", "email.Header", "email.Iterators", "email.MIMEAudio", "email.MIMEBase", "email.MIMEImage", "email.MIMEMessage", "email.MIMEMultipart", "email.MIMEText", "email.Message", "email.Parser", "email.Utils", "email.base64MIME", "email.quopriMIME",
-                        # "genshi.template", "genshi.template.loader",
-                        # "google.appengine.api",
-                        # "greenlet",
-                        # "io",
-                        # "jinja2._markupsafe._speedups",
-                        # "json",
-                        # "logging._checkLevel",
-                        # "lxml", "lxml.html",
-                        # "memcache",
-                        # "pkg_resources",
-                        # "pyinotify",
-                        # "pylibmc",
-                        # "redis",
-                        # "resource",
-                        # "twisted.internet._sigchld",
-                        # "tcl",
-                        # "unittest.case", "unittest.runner",
-                        # "werkzeug.Client", "werkzeug.EnvironBuilder", "werkzeug.Headers", "werkzeug.ImmutableDict", "werkzeug.LocalProxy", "werkzeug.LocalStack", "werkzeug.Request", "werkzeug.Response", "werkzeug.abort", "werkzeug.cached_property", "werkzeug.create_environ", "werkzeug.import_string", "werkzeug.redirect", "werkzeug.run_simple", "werkzeug.wrap_file"
-                    ],
+                    # "dll_excludes": [
+                    #     # "OLEAUT32.dll", "USER32.dll", "MPR.dll", "SHELL32.dll", "KERNEL32.dll", "COMDLG32.dll",
+                    #     # "WSOCK32.dll", "COMCTL32.dll", "ADVAPI32.dll", "NETAPI32.dll", "WS2_32.dll", "MSVCP71.dll",
+                    #     # "VERSION.dll", "ole32.dll", "MSWSOCK.dll", "GDI32.dll"
+                    # ],
+                    # "ignores": [
+                    #     # "DLFCN",
+                    #     # "PySide.QtCore",
+                    #     # "__pypy__",
+                    #     # "blinker",
+                    #     # "dl",
+                    #     # "cmemcache", "cmemcached",
+                    #     # "django.utils",
+                    #     # "email.Charset", "email.Encoders", "email.Errors", "email.Generator", "email.Header", "email.Iterators", "email.MIMEAudio", "email.MIMEBase", "email.MIMEImage", "email.MIMEMessage", "email.MIMEMultipart", "email.MIMEText", "email.Message", "email.Parser", "email.Utils", "email.base64MIME", "email.quopriMIME",
+                    #     # "genshi.template", "genshi.template.loader",
+                    #     # "google.appengine.api",
+                    #     # "greenlet",
+                    #     # "io",
+                    #     # "jinja2._markupsafe._speedups",
+                    #     # "json",
+                    #     # "logging._checkLevel",
+                    #     # "lxml", "lxml.html",
+                    #     # "memcache",
+                    #     # "pkg_resources",
+                    #     # "pyinotify",
+                    #     # "pylibmc",
+                    #     # "redis",
+                    #     # "resource",
+                    #     # "twisted.internet._sigchld",
+                    #     # "tcl",
+                    #     # "unittest.case", "unittest.runner",
+                    #     # "werkzeug.Client", "werkzeug.EnvironBuilder", "werkzeug.Headers", "werkzeug.ImmutableDict", "werkzeug.LocalProxy", "werkzeug.LocalStack", "werkzeug.Request", "werkzeug.Response", "werkzeug.abort", "werkzeug.cached_property", "werkzeug.create_environ", "werkzeug.import_string", "werkzeug.redirect", "werkzeug.run_simple", "werkzeug.wrap_file"
+                    # ],
                 },
             },
         },

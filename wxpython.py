@@ -170,7 +170,7 @@ class MainFrame(wx.Frame):
             {"name": "Nested dictionary", "isNested": True},
             [1,"2", None]])
         jsBindings.SetObject("external", JavascriptExternal(self.browser))
-        jsBindings.SetProperty("sources", GetSources())
+        #jsBindings.SetProperty("sources", GetSources())
         self.browser.SetJavascriptBindings(jsBindings)
 
         if self.mainPanel:
@@ -758,7 +758,7 @@ if __name__ == '__main__':
         # The "subprocess" executable that launches the Renderer
         # and GPU processes among others. You may rename that
         # executable if you like.
-        "browser_subprocess_path": GetApplicationPath("subprocess"),
+        "browser_subprocess_path": GetApplicationPath("subprocess.exe"),
         # This option is required for the GetCookieManager callback
         # to work. It affects renderer processes, when this option
         # is set to True. It will force a separate renderer process
