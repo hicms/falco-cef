@@ -28,6 +28,8 @@ import os, sys
 from cefpython3 import cefpython
 
 import wx
+#import win32gui
+#import win32con
 import time
 import re
 import uuid
@@ -108,6 +110,13 @@ def ExceptHook(excType, excValue, traceObject):
     os._exit(1)
 
 class MainFrame(wx.Frame):
+    TIMERS = {
+        "raise": {
+            "id": 100,
+            "interval": 1000,
+        }
+    }
+
     browser = None
     mainPanel = None
 
@@ -124,6 +133,9 @@ class MainFrame(wx.Frame):
             title = "wxPython CEF 3 example"
         wx.Frame.__init__(self, parent=None, id=wx.ID_ANY,
                 title=title)
+
+        self.SetWindowStyle(wx.DEFAULT_FRAME_STYLE | wx.STAY_ON_TOP)
+
         size=(800,600)
         
         # This is an optional code to enable High DPI support.
@@ -186,6 +198,11 @@ class MainFrame(wx.Frame):
             # Bind EVT_IDLE only for the main application frame.
             self.Bind(wx.EVT_IDLE, self.OnIdle)
 
+        config = self.TIMERS["raise"]
+        self.raise_timer = wx.Timer(self, config["id"])
+        self.raise_timer.Start(config["interval"])
+        wx.EVT_TIMER(self, config["id"], self._do_raise)
+
     def CreateMenu(self):
         filemenu = wx.Menu()
         filemenu.Append(1, "Open")
@@ -219,6 +236,29 @@ class MainFrame(wx.Frame):
 
     def OnIdle(self, event):
         cefpython.MessageLoopWork()
+
+    def _do_raise(self, *args, **kwargs):
+        """
+        Quietly raise this window to the front without stealing focus.
+
+        wxFrame.Raise doesn't quite do what we want, as it doesn't pass
+        the SWP_NOACTIVATE flag to win32's SetWindowPos() call, and so
+        the window in the background will flash on the taskbar.  We work
+        around this by quickly unsetting and resetting the STAY_ON_TOP
+        style.
+        """
+        flags = (win32con.SWP_NOACTIVATE |
+                win32con.SWP_NOMOVE |
+                win32con.SWP_NOSIZE)
+        self.SetWindowStyle(self.GetWindowStyle() & ~wx.STAY_ON_TOP)
+        self.SetWindowStyle(self.GetWindowStyle() | wx.STAY_ON_TOP)
+
+        # More correct implementation using win32 calls
+        #win32gui.SetWindowPos(
+        #        self.GetHandle(),
+        #        win32con.HWND_TOP,
+        #        0, 0, 0, 0,
+        #        flags)
 
 def PyPrint(message):
     print("[wxpython.py] PyPrint: "+message)
@@ -740,6 +780,7 @@ if __name__ == '__main__':
     # happens on any of the threads.
     sys.excepthook = ExceptHook
 
+    print os.listdir(r'C:\Python27\Lib\site-packages\cefpython3\locales')
     # Application settings
     g_applicationSettings = {
         # CEF Python debug messages in console and in log_file
@@ -753,8 +794,10 @@ if __name__ == '__main__':
 
         "cache_path": GetApplicationPath("cache"),
         # These directories must be set on Linux
-        "locales_dir_path": GetApplicationPath("locales"),
-        "resources_dir_path": GetApplicationPath(),
+        #"locales_dir_path": GetApplicationPath("locales"),
+        "locales_dir_path": r'C:\Python27\Lib\site-packages\cefpython3\locales',
+        #"resources_dir_path": GetApplicationPath(),
+        "resources_dir_path": r'C:\resources',
         # The "subprocess" executable that launches the Renderer
         # and GPU processes among others. You may rename that
         # executable if you like.
