@@ -247,13 +247,13 @@ class MainFrame(wx.Frame):
         around this by quickly unsetting and resetting the STAY_ON_TOP
         style.
         """
-        flags = (win32con.SWP_NOACTIVATE |
-                win32con.SWP_NOMOVE |
-                win32con.SWP_NOSIZE)
         self.SetWindowStyle(self.GetWindowStyle() & ~wx.STAY_ON_TOP)
         self.SetWindowStyle(self.GetWindowStyle() | wx.STAY_ON_TOP)
 
         # More correct implementation using win32 calls
+        #flags = (win32con.SWP_NOACTIVATE |
+        #        win32con.SWP_NOMOVE |
+        #        win32con.SWP_NOSIZE)
         #win32gui.SetWindowPos(
         #        self.GetHandle(),
         #        win32con.HWND_TOP,
